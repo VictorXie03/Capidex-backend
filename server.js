@@ -1,8 +1,6 @@
 const express = require('express');
-const OpenAI = require('openai');
 const path = require('path');
 const bodyParser = require('body-parser');
-const axios = require('axios');
 const mongoose = require('mongoose');
 require('dotenv/config');
 const cors = require('cors')
@@ -36,31 +34,12 @@ app.use(cookieParser());
 const coinlistRoute = require('./routes/coinlist');
 const authRoute = require('./routes/auth');
 const stocklistRoute = require('./routes/stocklist');
-const openai = new OpenAI({ key: process.env.OPENAI_API_KEY });
 
 app.use('/coinlist', coinlistRoute)
 app.use('/user', authRoute);
 app.use('/stocklist', stocklistRoute)
 
 app.use(express.json());
-
-app.post('/api/chat', async (req, res) => {
-    const { userMessage } = req.body;
-
-    try {
-        const completion = await openai.chat.completions.create({
-            messages: [{ role: 'system', content: 'You are a helpful assistant.' }, { role: 'user', content: userMessage }],
-            model: 'gpt-3.5-turbo',
-        });
-
-        const botMessage = completion.choices[0].message.content;
-
-        res.json({ botMessage });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
