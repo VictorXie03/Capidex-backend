@@ -13,7 +13,7 @@ mongoose.connect(process.env.DB_CONNECTION, () => console.log('connected to DB!'
 
 const uri = process.env.DB_CONNECTION;
 
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env.DB_CONNECTION, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const connection = mongoose.connection;
 connection.once('open', () => {
