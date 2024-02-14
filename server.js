@@ -6,19 +6,10 @@ require('dotenv/config');
 const cors = require('cors')
 const app = express()
 const cookieParser = require("cookie-parser")
-const port = 9999;
+const port = process.env.PORT || 4000;
 
 mongoose.set('strictQuery', false);
 mongoose.connect(process.env.DB_CONNECTION, () => console.log('connected to DB!'))
-
-const uri = process.env.DB_CONNECTION;
-
-mongoose.connect(process.env.DB_CONNECTION, { useNewUrlParser: true, useUnifiedTopology: true });
-
-const connection = mongoose.connection;
-connection.once('open', () => {
-    console.log('MongoDB database connection established successfully');
-});
 
 
 app.use(cors({ credentials: true, origin: process.env.REACT_APP_CORS_LINK }));
@@ -42,5 +33,5 @@ app.use('/stocklist', stocklistRoute)
 app.use(express.json());
 
 app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server is running on ${port}`);
 });
