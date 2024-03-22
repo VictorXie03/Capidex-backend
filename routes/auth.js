@@ -8,6 +8,7 @@ async function validateCookie(req, res, next) {
     if ('token' in cookies) {
         try {
             const userid = jwt.verify(cookies.token, process.env.JWT_SECRET).id
+            console.log(userid)
             res.locals.userid = userid
             const userinfo = await User.findOne({ _id: userid });
             res.locals.username = userinfo.name
