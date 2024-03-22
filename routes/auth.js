@@ -27,6 +27,7 @@ router.post('/login', async (req, res) => {
     const cookies = req.cookies;
     if ('token' in cookies) {
         const userid = jwt.verify(cookies.token, process.env.JWT_SECRET).id
+        console.log(userid)
         const userinfo = await User.findOne({ _id: userid });
         return res.status(200).json(userinfo)
     }
