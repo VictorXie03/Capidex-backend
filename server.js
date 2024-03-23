@@ -14,19 +14,17 @@ mongoose.connect(process.env.DB_CONNECTION, () => { console.log('connected to DB
         console.error(err)
     })
 app.use(function (req, res, next) {
-    res.header('Access-Control-Allow-Origin', 'https://capidex.netlify.app/'); // Replace with your frontend domain
+    res.header('Access-Control-Allow-Origin', process.env.REACT_APP_CORS_LINK);
     res.header('Access-Control-Allow-Credentials', true);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    // Handle preflight requests
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
     } else {
         next();
     }
 });
-app.use(cors({ credentials: true, origin: process.env.REACT_APP_CORS_LINK }));
 app.use('/', express.static(path.join(__dirname, 'static')))
 app.use(bodyParser.json())
 app.use(
