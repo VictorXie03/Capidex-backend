@@ -40,10 +40,12 @@ app.use(cookieParser());
 const coinlistRoute = require('./routes/coinlist');
 const authRoute = require('./routes/auth');
 const stocklistRoute = require('./routes/stocklist');
+const corsRoute = require('./routes/test-cors');
 
 app.use('/coinlist', coinlistRoute)
 app.use('/user', authRoute);
 app.use('/stocklist', stocklistRoute)
+app.use('/test-cors', corsRoute)
 
 app.use(express.json());
 
