@@ -13,17 +13,12 @@ mongoose.connect(process.env.DB_CONNECTION, () => { console.log('connected to DB
     .catch((err) => {
         console.error(err)
     })
-app.use(function (req, res, next) {
-    res.header('Access-Control-Allow-Origin', process.env.REACT_APP_CORS_LINK);
-    res.header('Access-Control-Allow-Credentials', true);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, access-control-allow-methods, access-control-allow-origin, access-control-allow-credentials, access-control-allow-headers',);
-
-    if (req.method === 'OPTIONS') {
-        res.sendStatus(200);
-    } else {
-        next();
-    }
+app.use((req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', 'https://capidex.netlify.app/');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, access-control-allow-methods, access-control-allow-origin, access-control-allow-credentials, access-control-allow-headers',);
+    next();
 });
 app.use('/', express.static(path.join(__dirname, 'static')))
 app.use(bodyParser.json())
