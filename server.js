@@ -14,7 +14,7 @@ mongoose.connect(process.env.DB_CONNECTION, () => { console.log('connected to DB
         console.error(err)
     })
 app.get('/test-cors', (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', 'http://example.com');
+    res.setHeader('Access-Control-Allow-Origin', 'https://capidex.netlify.app/');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
