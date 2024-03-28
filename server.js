@@ -21,7 +21,7 @@ app.get('/test-cors', (req, res) => {
     res.send('CORS headers set correctly');
 });
 
-app.use((req, res, next) {
+app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', 'https://capidex.netlify.app/');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
