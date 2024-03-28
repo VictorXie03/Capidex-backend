@@ -17,7 +17,7 @@ app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', process.env.REACT_APP_CORS_LINK);
     res.header('Access-Control-Allow-Credentials', true);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, access-control-allow-methods',);
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, access-control-allow-methods, access-control-allow-origin',);
 
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
