@@ -16,9 +16,7 @@ mongoose.connection.on('reconnected', () => console.log('reconnected'));
 mongoose.connection.on('disconnecting', () => console.log('disconnecting'));
 mongoose.connection.on('close', () => console.log('close'));
 mongoose.connect(process.env.DB_CONNECTION, { useNewUrlParser: true }, () => { console.log('connected to DB!') })
-
 app.use(cors({ credentials: true, origin: process.env.REACT_APP_CORS_LINK }));
-app.use()
 app.use('/', express.static(path.join(__dirname, 'static')))
 app.use(bodyParser.json())
 app.use(
