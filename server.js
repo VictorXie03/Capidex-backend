@@ -9,12 +9,13 @@ const cookieParser = require("cookie-parser")
 const port = process.env.PORT || 4000;
 
 mongoose.set('strictQuery', false);
-mongoose.connect(process.env.DB_CONNECTION, () => { console.log('connected to DB!') })
+mongoose.connect(process.env.DB_CONNECTION, { useNewUrlParser: true }, () => { console.log('connected to DB!') })
     .catch((err) => {
         console.error(err)
     })
 
 app.use(cors({ credentials: true, origin: process.env.REACT_APP_CORS_LINK }));
+app.use()
 app.use('/', express.static(path.join(__dirname, 'static')))
 app.use(bodyParser.json())
 app.use(
