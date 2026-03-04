@@ -1,51 +1,48 @@
 const express = require('express');
-const path = require('path');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 require('dotenv/config');
-const cors = require('cors')
-const app = express()
-const cookieParser = require("cookie-parser")
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
+const app = express();
 const port = process.env.PORT || 4000;
 
+// ── Database ──────────────────────────────────────────
 mongoose.set('strictQuery', false);
-mongoose.connection.on('connected', () => console.log('connected'));
-mongoose.connection.on('open', () => console.log('open'));
-mongoose.connection.on('disconnected', () => console.log('disconnected'));
-mongoose.connection.on('reconnected', () => console.log('reconnected'));
-mongoose.connection.on('disconnecting', () => console.log('disconnecting'));
-mongoose.connection.on('close', () => console.log('close'));
-try {
-    mongoose.connect(process.env.DB_CONNECTION, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    });
-} catch (err) {
-    console.error(err.message);
-    process.exit(1);
-}
+mongoose.connection.on('connected', () => console.log('[DB] connected'));
+mongoose.connection.on('disconnected', () => console.log('[DB] disconnected'));
+mongoose.connection.on('error', (err) => console.error('[DB] error:', err));
 
-app.use(cors({ credentials: true, origin: process.env.REACT_APP_CORS_LINK }));
-app.use('/', express.static(path.join(__dirname, 'static')))
-app.use(bodyParser.json())
-app.use(
-    express.urlencoded({
-        extended: true,
-    })
-);
+mongoose.connect(process.env.DB_CONNECTION, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+}).catch(err => {
+    console.error('Failed to connect to MongoDB:', err.message);
+    process.exit(1);
+});
+
+// ── Middleware (ORDER MATTERS) ────────────────────────
+app.use(cors({
+    credentials: true,
+    origin: process.env.REACT_APP_CORS_LINK,
+}));
+
+app.use(express.json());           // must be before routes
+app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// ── Routes ────────────────────────────────────────────
 const coinlistRoute = require('./routes/coinlist');
 const authRoute = require('./routes/auth');
 const stocklistRoute = require('./routes/stocklist');
 
-app.use('/coinlist', coinlistRoute)
+app.use('/coinlist', coinlistRoute);
 app.use('/user', authRoute);
-app.use('/stocklist', stocklistRoute)
+app.use('/stocklist', stocklistRoute);
 
+// ── Health check ──────────────────────────────────────
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-app.use(express.json());
-
-app.listen(port, () => {
-    console.log(`Server is running on ${port}`);
-});
+app.listen(port, () => console.log(`Server running on port ${port}`));

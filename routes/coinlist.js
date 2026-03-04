@@ -1,46 +1,63 @@
 const express = require('express');
 const router = express.Router();
-const Coinlist = require("../model/Coinlist");
-const { validateCookie } = require('./auth')
+const Coinlist = require('../model/Coinlist');
+const { validateCookie } = require('./auth');
 
+// ── POST /coinlist ────────────────────────────────────
 router.post('/', validateCookie, async (req, res) => {
+    const { name, price, id } = req.body;
 
-    try {
-        const response = await Coinlist.create({
-            name: req.body.name,
-            price: req.body.price,
-            id: req.body.id,
-            UserID: res.locals.userid
-        })
-        console.log('added coin', response)
-    } catch (err) {
-        res.json({ message: err })
+    if (!name || !id) {
+        return res.status(400).json({ status: 'error', error: 'name and id are required' });
     }
 
-})
+    try {
+        // Prevent duplicates
+        const existing = await Coinlist.findOne({ id, UserID: res.locals.userid });
+        if (existing) return res.status(409).json({ status: 'error', error: 'Coin already in watchlist' });
+
+        const coin = await Coinlist.create({
+            name,
+            price: String(price || '0'),
+            id,
+            UserID: res.locals.userid,
+        });
+
+        return res.status(201).json({ status: 'ok', data: coin });
+    } catch (err) {
+        console.error('Add coin error:', err);
+        return res.status(500).json({ status: 'error', error: 'Server error' });
+    }
+});
+
+// ── GET /coinlist ─────────────────────────────────────
 router.get('/', validateCookie, async (req, res) => {
-
     try {
-        const coinlists = await Coinlist.find({ UserID: res.locals.userid });
-        res.json(coinlists);
+        const coins = await Coinlist.find({ UserID: res.locals.userid });
+        return res.json(coins);
     } catch (err) {
-        res.json({ msg: err });
+        console.error('Get coinlist error:', err);
+        return res.status(500).json({ status: 'error', error: 'Server error' });
     }
-})
+});
 
+// ── DELETE /coinlist/:coinId ──────────────────────────
 router.delete('/:coinId', validateCookie, async (req, res) => {
     try {
-        const tarCoin = await Coinlist.findOne({ _id: req.params.coinId });
+        const coin = await Coinlist.findById(req.params.coinId);
+        if (!coin) return res.status(404).json({ status: 'error', error: 'Coin not found' });
 
-        if (tarCoin.UserID !== res.locals.userid) return res.status(403).json('Not Authenticated')
+        // Compare as strings to avoid ObjectId type mismatch
+        if (coin.UserID.toString() !== res.locals.userid.toString()) {
+            return res.status(403).json({ status: 'error', error: 'Not authorized' });
+        }
 
-        const removedCoin = await Coinlist.deleteOne({ _id: req.params.coinId });
-
-        res.json(removedCoin)
-
+        await Coinlist.deleteOne({ _id: req.params.coinId });
+        return res.json({ status: 'ok', message: 'Coin removed' });
     } catch (err) {
-        res.json({ msg: err });
+        console.error('Delete coin error:', err);
+        return res.status(500).json({ status: 'error', error: 'Server error' });
     }
-})
+});
 
 module.exports = router;
