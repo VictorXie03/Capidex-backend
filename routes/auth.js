@@ -21,7 +21,6 @@ async function validateCookie(req, res, next) {
 }
 
 // ── Cookie options ────────────────────────────────────
-// sameSite:'none' + secure:true required for cross-origin cookies (Netlify → Render)
 const isProd = process.env.NODE_ENV === 'production';
 const cookieOptions = {
     httpOnly: true,
@@ -29,20 +28,9 @@ const cookieOptions = {
     secure: isProd,
     maxAge: 7 * 24 * 60 * 60 * 1000,
 };
-```
-
-Also update your backend `.env` to add:
-```
-NODE_ENV = development
-    ```
-
-And on Render, set the environment variable:
-```
-NODE_ENV = production
 
 // ── POST /user/login ──────────────────────────────────
 router.post('/login', async (req, res) => {
-    // If already has a valid token, auto-authenticate
     const existingToken = req.cookies?.token;
     if (existingToken) {
         try {
