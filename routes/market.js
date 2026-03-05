@@ -22,8 +22,14 @@ function setCache(key, data) {
     cache[key] = { data, timestamp: Date.now() };
 }
 
+function parsePrices(prices) {
+    return prices.map(([timestamp, p]) => ({
+        Date: new Date(timestamp).toLocaleDateString('en-us'),
+        Price: p,
+    }));
+}
+
 // ── GET /market/stocks/trending ───────────────────────
-// Returns top 5 stocks with prices, cached for 5 mins
 router.get('/stocks/trending', async (req, res) => {
     const cacheKey = 'stocks_trending';
     const cached = getCache(cacheKey);
@@ -31,11 +37,8 @@ router.get('/stocks/trending', async (req, res) => {
 
     const symbols = ['TSLA', 'AAPL', 'GOOGL', 'AMZN', 'META'];
     const names = {
-        TSLA: 'Tesla Inc',
-        AAPL: 'Apple Inc',
-        GOOGL: 'Alphabet Inc',
-        AMZN: 'Amazon.com Inc',
-        META: 'Meta Platforms Inc',
+        TSLA: 'Tesla Inc', AAPL: 'Apple Inc', GOOGL: 'Alphabet Inc',
+        AMZN: 'Amazon.com Inc', META: 'Meta Platforms Inc',
     };
 
     try {
@@ -44,12 +47,9 @@ router.get('/stocks/trending', async (req, res) => {
                 axios.get(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${s}&apikey=${ALPHA_KEY}`)
             )
         );
-
-        const stocks = responses.map((res, i) => {
-            const quote = res.data?.['Global Quote'];
-            if (!quote || !quote['01. symbol']) {
-                return { symbol: symbols[i], name: names[symbols[i]], price: null };
-            }
+        const stocks = responses.map((r, i) => {
+            const quote = r.data?.['Global Quote'];
+            if (!quote || !quote['01. symbol']) return { symbol: symbols[i], name: names[symbols[i]], price: null };
             return {
                 symbol: quote['01. symbol'],
                 name: names[symbols[i]],
@@ -58,14 +58,11 @@ router.get('/stocks/trending', async (req, res) => {
                 changePercent: quote['10. change percent'],
             };
         });
-
         setCache(cacheKey, stocks);
         return res.json(stocks);
     } catch (err) {
         console.error('Trending stocks error:', err);
-        // Return fallback with no prices rather than crashing
-        const fallback = symbols.map(s => ({ symbol: s, name: names[s], price: null }));
-        return res.json(fallback);
+        return res.json(symbols.map(s => ({ symbol: s, name: names[s], price: null })));
     }
 });
 
@@ -82,14 +79,11 @@ router.get('/stocks/search', async (req, res) => {
         const response = await axios.get(
             `https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${q}&apikey=${ALPHA_KEY}`
         );
-
         if (!response.data?.bestMatches) return res.json([]);
-
         const stocks = response.data.bestMatches.map(m => ({
             symbol: m['1. symbol'],
             name: m['2. name'],
         }));
-
         setCache(cacheKey, stocks);
         return res.json(stocks);
     } catch (err) {
@@ -109,7 +103,6 @@ router.get('/crypto/trending', async (req, res) => {
             axios.get('https://api.coingecko.com/api/v3/search/trending'),
             axios.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'),
         ]);
-
         const btcPrice = btcRes.data.bitcoin.usd;
         const coins = trendingRes.data.coins.map(coin => ({
             id: coin.item.id,
@@ -118,7 +111,6 @@ router.get('/crypto/trending', async (req, res) => {
             priceBtc: coin.item.price_btc?.toFixed(10),
             priceUsd: (coin.item.price_btc * btcPrice)?.toFixed(4),
         }));
-
         setCache(cacheKey, coins);
         return res.json(coins);
     } catch (err) {
@@ -137,20 +129,50 @@ router.get('/crypto/search', async (req, res) => {
     if (cached) return res.json(cached);
 
     try {
-        const res2 = await axios.get(
-            `https://api.coingecko.com/api/v3/search?query=${q}`
-        );
-        const coins = res2.data.coins.map(coin => ({
+        const response = await axios.get(`https://api.coingecko.com/api/v3/search?query=${q}`);
+        const coins = response.data.coins.map(coin => ({
             id: coin.id,
             name: coin.name,
             image: coin.large,
         }));
-
         setCache(cacheKey, coins);
         return res.json(coins);
     } catch (err) {
         console.error('Crypto search error:', err);
         return res.json([]);
+    }
+});
+
+// ── GET /market/crypto/:id ────────────────────────────
+// Single endpoint that fetches all coin detail data at once with caching
+router.get('/crypto/:id', async (req, res) => {
+    const { id } = req.params;
+    const cacheKey = `crypto_detail_${id}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
+    try {
+        const [dataRes, chartDefault, chartDay, chartWeek, chartYear] = await Promise.all([
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}?localization=false&market_data=true`),
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=121`),
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=1`),
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7`),
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=365`),
+        ]);
+
+        const result = {
+            data: dataRes.data,
+            graphData: parsePrices(chartDefault.data.prices),
+            graphDataDay: parsePrices(chartDay.data.prices),
+            graphDataWeek: parsePrices(chartWeek.data.prices),
+            graphDataYear: parsePrices(chartYear.data.prices),
+        };
+
+        setCache(cacheKey, result);
+        return res.json(result);
+    } catch (err) {
+        console.error(`Coin detail error for ${id}:`, err.message);
+        return res.status(500).json({ error: 'Failed to fetch coin data' });
     }
 });
 
