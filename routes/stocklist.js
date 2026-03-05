@@ -19,7 +19,7 @@ router.post('/', validateCookie, async (req, res) => {
         let stockPrice = price;
         if (!stockPrice) {
             const response = await axios.get(
-                `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${process.env.ALPHA_VANTAGE_KEY || 'QD5VF4J0PRZS8TED'}`
+                `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${process.env.ALPHA_VANTAGE_KEY}`
             );
             stockPrice = response.data?.['Global Quote']?.['05. price'] || '0';
         }

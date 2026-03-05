@@ -11,7 +11,6 @@ const port = process.env.PORT || 4000;
 // ── Database ──────────────────────────────────────────
 mongoose.set('strictQuery', false);
 mongoose.connection.on('connected', () => console.log('[DB] connected'));
-mongoose.connection.on('disconnected', () => console.log('[DB] disconnected'));
 mongoose.connection.on('error', (err) => console.error('[DB] error:', err));
 
 mongoose.connect(process.env.DB_CONNECTION, {
@@ -22,27 +21,19 @@ mongoose.connect(process.env.DB_CONNECTION, {
     process.exit(1);
 });
 
-// ── Middleware (ORDER MATTERS) ────────────────────────
-app.use(cors({
-    credentials: true,
-    origin: process.env.REACT_APP_CORS_LINK,
-}));
-
-app.use(express.json());           // must be before routes
+// ── Middleware ────────────────────────────────────────
+app.use(cors({ credentials: true, origin: process.env.REACT_APP_CORS_LINK }));
+app.use(express.json());
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ── Routes ────────────────────────────────────────────
-const coinlistRoute = require('./routes/coinlist');
-const authRoute = require('./routes/auth');
-const stocklistRoute = require('./routes/stocklist');
+app.use('/coinlist', require('./routes/coinlist'));
+app.use('/user', require('./routes/auth'));
+app.use('/stocklist', require('./routes/stocklist'));
+app.use('/market', require('./routes/market'));   // new proxy route
 
-app.use('/coinlist', coinlistRoute);
-app.use('/user', authRoute);
-app.use('/stocklist', stocklistRoute);
-
-// ── Health check ──────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
