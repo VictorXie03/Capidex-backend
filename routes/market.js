@@ -3,6 +3,9 @@ const router = express.Router();
 const axios = require('axios');
 
 const ALPHA_KEY = process.env.ALPHA_VANTAGE_KEY;
+const CG_HEADERS = process.env.COINGECKO_KEY
+    ? { 'x-cg-demo-api-key': process.env.COINGECKO_KEY }
+    : {};
 
 // ── Simple in-memory cache ────────────────────────────
 const cache = {};
@@ -100,8 +103,8 @@ router.get('/crypto/trending', async (req, res) => {
 
     try {
         const [trendingRes, btcRes] = await Promise.all([
-            axios.get('https://api.coingecko.com/api/v3/search/trending'),
-            axios.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'),
+            axios.get('https://api.coingecko.com/api/v3/search/trending', { headers: CG_HEADERS }),
+            axios.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', { headers: CG_HEADERS }),
         ]);
         const btcPrice = btcRes.data.bitcoin.usd;
         const coins = trendingRes.data.coins.map(coin => ({
@@ -129,7 +132,7 @@ router.get('/crypto/search', async (req, res) => {
     if (cached) return res.json(cached);
 
     try {
-        const response = await axios.get(`https://api.coingecko.com/api/v3/search?query=${q}`);
+        const response = await axios.get(`https://api.coingecko.com/api/v3/search?query=${q}`, { headers: CG_HEADERS });
         const coins = response.data.coins.map(coin => ({
             id: coin.id,
             name: coin.name,
@@ -153,11 +156,11 @@ router.get('/crypto/:id', async (req, res) => {
 
     try {
         const [dataRes, chartDefault, chartDay, chartWeek, chartYear] = await Promise.all([
-            axios.get(`https://api.coingecko.com/api/v3/coins/${id}?localization=false&market_data=true`),
-            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=121`),
-            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=1`),
-            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7`),
-            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=365`),
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}?localization=false&market_data=true`, { headers: CG_HEADERS }),
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=121`, { headers: CG_HEADERS }),
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=1`, { headers: CG_HEADERS }),
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7`, { headers: CG_HEADERS }),
+            axios.get(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=365`, { headers: CG_HEADERS }),
         ]);
 
         const result = {
