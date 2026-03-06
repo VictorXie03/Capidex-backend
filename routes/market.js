@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const yahooFinance = require('yahoo-finance2').default;
+const { YahooFinance } = require('yahoo-finance2');
+const yahooFinance = new YahooFinance();
 
 const CG_HEADERS = process.env.COINGECKO_KEY
     ? { 'x-cg-demo-api-key': process.env.COINGECKO_KEY }
